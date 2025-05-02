@@ -347,3 +347,27 @@ body {
         font-size: 0.875rem;
     }
 }
+
+/* Modal Body Scroll */
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+/* Clickable Elements */
+.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clickable:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+/* Date Styling */
+.date-display {
+    color: var(--color-accent);
+    font-weight: 500;
+}
