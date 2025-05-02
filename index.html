@@ -3,56 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jadwal Kuliah Interaktif</title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <title>Jadwal Kuliah</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --background: #f8f9fa;
+            --text: #2d3436;
+        }
+
+        [data-theme="dark"] {
+            --primary: #34495e;
+            --secondary: #2980b9;
+            --background: #2c3e50;
+            --text: #ecf0f1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--secondary);
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .participants {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .participant {
+            background: var(--secondary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--primary);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+    </style>
 </head>
 <body>
-    <div class="theme-overlay"></div>
-    
-    <header class="header">
-        <div class="header-top">
-            <div class="brand">
-                <i class="material-icons">calendar_today</i>
-                <h1>Jadwal Kuliah</h1>
-            </div>
-            <button id="themeToggle" class="theme-toggle">
-                <i class="material-icons" id="modeIcon">dark_mode</i>
-            </button>
-        </div>
-        
-        <div class="header-bottom">
-            <div class="search-container">
-                <input type="text" id="searchInput" class="search-input" placeholder="Cari jadwal...">
-                <i class="material-icons">search</i>
-            </div>
-            <nav class="filter-nav" id="filterNav"></nav>
-        </div>
-    </header>
+    <div class="header">
+        <h1>Jadwal Kuliah</h1>
+        <button id="themeToggle">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
 
-    <main class="main-content">
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Memuat Jadwal...</p>
-        </div>
+    <div class="container">
+        <input type="text" class="search-input" id="searchInput" placeholder="Cari jadwal...">
+        <div class="grid" id="scheduleGrid"></div>
+    </div>
 
-        <div class="schedule-grid" id="scheduleGrid"></div>
-
-        <div class="empty-state" id="emptyState">
-            <i class="material-icons">calendar_today</i>
-            <h3>Jadwal tidak ditemukan</h3>
-            <p>Coba kata kunci atau filter berbeda</p>
-        </div>
-    </main>
-
-    <div class="participant-modal" id="participantModal">
+    <div class="modal" id="participantModal">
         <div class="modal-content">
-            <span class="close-modal material-icons">close</span>
-            <h3 id="modalTitle"></h3>
-            <div class="modal-schedules" id="modalSchedules"></div>
+            <h2 id="modalTitle"></h2>
+            <div id="modalSchedules"></div>
+            <button onclick="closeModal()" style="margin-top: 1rem">Tutup</button>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycby9sPywic_2ifeYBzE3dQMHfrwkR4-fQv-bNx74HMduvcq5Rr4r9MY6GGEYNqI44WRI/exec';
+        
+        let allSchedules = [];
+
+        // Ambil data dari API
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                allSchedules = processData(data);
+                renderSchedules(allSchedules);
+            } catch (error) {
+                console.error('Gagal memuat data:', error);
+            }
+        }
+
+        // Proses data mentah dari API
+        function processData(rawData) {
+            const today = new Date();
+            return rawData
+                .filter(item => new Date(item.Tanggal) >= today)
+                .sort((a, b) => new Date(a.Tanggal) - new Date(b.Tanggal));
+        }
+
+        // Tampilkan data
+        function renderSchedules(data) {
+            const grid = document.getElementById('scheduleGrid');
+            grid.innerHTML = data.map(item => `
+                <div class="card">
+                    <h3>${item.Mata_Pelajaran}</h3>
+                    <p>${item.Institusi} • ${formatDate(item.Tanggal)}</p>
+                    <div class="participants">
+                        ${item.Peserta.map(p => `
+                            <span class="participant" onclick="showParticipant('${p}')">${p}</span>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Tampilkan modal peserta
+        function showParticipant(name) {
+            const filtered = allSchedules.filter(item => 
+                item.Peserta.includes(name) && 
+                new Date(item.Tanggal) >= new Date()
+            );
+            
+            document.getElementById('modalTitle').textContent = `Jadwal ${name}`;
+            document.getElementById('modalSchedules').innerHTML = filtered.length > 0 
+                ? filtered.map(item => `
+                    <div style="margin-bottom: 1rem">
+                        <h4>${item.Mata_Pelajaran}</h4>
+                        <p>${item.Institusi} • ${formatDate(item.Tanggal)}</p>
+                    </div>
+                `).join('')
+                : '<p>Tidak ada jadwal berikutnya</p>';
+            
+            document.getElementById('participantModal').style.display = 'flex';
+        }
+
+        // Format tanggal
+        function formatDate(dateString) {
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+
+        // Toggle tema
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.body.toggleAttribute('data-theme');
+            const icon = document.querySelector('#themeToggle i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+            localStorage.setItem('theme', document.body.hasAttribute('data-theme') ? 'dark' : 'light');
+        });
+
+        // Pencarian
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allSchedules.filter(item =>
+                item.Mata_Pelajaran.toLowerCase().includes(term) ||
+                item.Institusi.toLowerCase().includes(term) ||
+                item.Peserta.some(p => p.toLowerCase().includes(term))
+            );
+            renderSchedules(filtered);
+        });
+
+        // Tutup modal
+        function closeModal() {
+            document.getElementById('participantModal').style.display = 'none';
+        }
+
+        // Inisialisasi
+        function init() {
+            // Load tema tersimpan
+            if(localStorage.getItem('theme') === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                document.querySelector('#themeToggle i').classList.replace('fa-moon', 'fa-sun');
+            }
+            fetchData();
+        }
+
+        init();
+    </script>
 </body>
 </html>
