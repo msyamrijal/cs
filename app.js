@@ -216,4 +216,63 @@ const handleEntityClick = (type, value) => {
 // ======================
 // EVENT HANDLERS
 // ======================
-const attachDynamicListeners = ()
+const attachDynamicListeners = () => {
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('course-title')) {
+            handleEntityClick(MODAL_TYPES.COURSE, e.target.textContent);
+        }
+        else if (e.target.classList.contains('institute')) {
+            handleEntityClick(MODAL_TYPES.INSTITUTION, e.target.textContent);
+        }
+        else if (e.target.classList.contains('date-display')) {
+            handleEntityClick(MODAL_TYPES.DATE, e.target.textContent);
+        }
+        else if (e.target.classList.contains('participant-tag')) {
+            handleEntityClick(MODAL_TYPES.PARTICIPANT, e.target.textContent);
+        }
+    });
+};
+
+document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+        elements.modal.style.display = 'none';
+    });
+});
+
+window.onclick = (e) => {
+    if (e.target === elements.modal) {
+        elements.modal.style.display = 'none';
+    }
+};
+
+// ======================
+// UTILITIES
+// ======================
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
+};
+
+const showError = () => {
+    elements.emptyState.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Gagal Memuat Data</h3>
+        <p>Coba refresh halaman atau coba lagi nanti</p>
+    `;
+    elements.emptyState.style.display = 'flex';
+};
+
+// ======================
+// INITIALIZATION
+// ======================
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+elements.searchInput.addEventListener('input', filterSchedules);
+
+// Start Application
+initTheme();
+fetchData();
