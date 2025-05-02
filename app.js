@@ -1,6 +1,23 @@
 // app.js
 const API_URL = 'https://script.google.com/macros/s/AKfycby9sPywic_2ifeYBzE3dQMHfrwkR4-fQv-bNx74HMduvcq5Rr4r9MY6GGEYNqI44WRI/exec';
+const MODAL_TYPES = {
+    COURSE: 'course',
+    INSTITUTION: 'institution',
+    DATE: 'date',
+    PARTICIPANT: 'participant'
+};
+
 let allSchedules = [];
+const elements = {
+    loading: document.getElementById('loading'),
+    scheduleGrid: document.getElementById('scheduleGrid'),
+    emptyState: document.getElementById('emptyState'),
+    searchInput: document.getElementById('searchInput'),
+    filterNav: document.getElementById('filterNav'),
+    modal: document.getElementById('genericModal'),
+    modalTitle: document.getElementById('modalTitle'),
+    modalBody: document.getElementById('modalBody')
+};
 
 // ======================
 // THEME MANAGEMENT
@@ -14,7 +31,6 @@ const initTheme = () => {
 const toggleTheme = () => {
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     updateThemeIcon(newTheme);
@@ -42,12 +58,12 @@ const fetchData = async () => {
         
         initFilters();
         renderSchedules(allSchedules);
-        attachParticipantListeners();
+        attachDynamicListeners();
     } catch (error) {
         console.error('Error:', error);
         showError();
     } finally {
-        document.getElementById('loading').style.display = 'none';
+        elements.loading.style.display = 'none';
     }
 };
 
@@ -56,9 +72,7 @@ const fetchData = async () => {
 // ======================
 const initFilters = () => {
     const institutions = [...new Set(allSchedules.map(item => item.Institusi))];
-    const filterNav = document.getElementById('filterNav');
-    
-    filterNav.innerHTML = `
+    elements.filterNav.innerHTML = `
         <button class="filter-btn active" data-filter="all">Semua</button>
         ${institutions.map(inst => `
             <button class="filter-btn" data-filter="${inst}">${inst}</button>
@@ -77,7 +91,7 @@ const handleFilterClick = (e) => {
 };
 
 const filterSchedules = () => {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const searchTerm = elements.searchInput.value.toLowerCase();
     const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
     
     const filtered = allSchedules.filter(item => {
@@ -94,129 +108,112 @@ const filterSchedules = () => {
     });
 
     renderSchedules(filtered);
-    attachParticipantListeners();
 };
 
 // ======================
 // RENDERING
 // ======================
 const renderSchedules = (data) => {
-    const grid = document.getElementById('scheduleGrid');
-    const emptyState = document.getElementById('emptyState');
-    
-    grid.innerHTML = '';
+    elements.scheduleGrid.innerHTML = '';
     
     if (data.length === 0) {
-        emptyState.style.display = 'flex';
+        elements.emptyState.style.display = 'flex';
         return;
     }
     
-    emptyState.style.display = 'none';
+    elements.emptyState.style.display = 'none';
 
     data.forEach(item => {
         const card = document.createElement('article');
         card.className = 'schedule-card';
         card.innerHTML = `
             <div class="card-header">
-                <h3>${item.Mata_Pelajaran}</h3>
-                <span>${formatDate(item.Tanggal)}</span>
+                <h3 class="clickable course-title">${item.Mata_Pelajaran}</h3>
+                <span class="date-display clickable">${formatDate(item.Tanggal)}</span>
             </div>
-            <div class="institute">${item.Institusi}</div>
+            <div class="institute clickable">${item.Institusi}</div>
             <div class="participants">
                 ${item.Peserta.map(peserta => `
-                    <span class="participant-tag">${peserta}</span>
+                    <span class="participant-tag clickable">${peserta}</span>
                 `).join('')}
             </div>
         `;
-        grid.appendChild(card);
+        elements.scheduleGrid.appendChild(card);
     });
 };
 
 // ======================
-// PARTICIPANT MODAL
+// MODAL HANDLING
 // ======================
-const attachParticipantListeners = () => {
-    document.querySelectorAll('.participant-tag').forEach(tag => {
-        tag.addEventListener('click', (e) => {
-            showParticipantSchedule(e.target.textContent);
-        });
-    });
+const showModal = (title, content) => {
+    elements.modalTitle.textContent = title;
+    elements.modalBody.innerHTML = content;
+    elements.modal.style.display = 'block';
 };
 
-const showParticipantSchedule = (participantName) => {
-    const today = new Date();
-    const upcomingSchedules = allSchedules.filter(schedule => 
-        schedule.Peserta.includes(participantName) && 
-        new Date(schedule.Tanggal) >= today
-    );
-
-    const modal = document.getElementById('participantModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalSchedules = document.getElementById('modalSchedules');
+const generateModalContent = (data) => {
+    if (data.length === 0) return `<p class="no-data">Tidak ada data yang tersedia</p>`;
     
-    modalTitle.textContent = `Jadwal Mendatang ${participantName}`;
-    modalSchedules.innerHTML = upcomingSchedules.length > 0 
-        ? upcomingSchedules.map(schedule => `
-            <div class="modal-schedule-item">
-                <div class="modal-item-header">
-                    <h4>${schedule.Mata_Pelajaran}</h4>
-                    <span>${formatDate(schedule.Tanggal)}</span>
-                </div>
-                <div class="institute">${schedule.Institusi}</div>
-                <div class="participants">
-                    ${schedule.Peserta.map(p => `
-                        <span class="participant-tag ${p === participantName ? 'highlight' : ''}">${p}</span>
-                    `).join('')}
+    return data.map(item => `
+        <div class="modal-item">
+            <div class="modal-item-header">
+                <h4>${item.Mata_Pelajaran}</h4>
+                <div class="modal-meta">
+                    <span class="institute">${item.Institusi}</span>
+                    <span class="date-display">${formatDate(item.Tanggal)}</span>
                 </div>
             </div>
-        `).join('')
-        : `<p class="no-schedule">Tidak ada jadwal berikutnya untuk ${participantName}</p>`;
+            <div class="participants">
+                ${item.Peserta.map(p => `
+                    <span class="participant-tag">${p}</span>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+};
+
+const handleEntityClick = (type, value) => {
+    let filteredData = [];
+    let title = '';
     
-    modal.style.display = 'block';
-    attachParticipantListeners(); // Re-attach listeners for new tags
-};
-
-// ======================
-// UTILITIES
-// ======================
-const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-    });
-};
-
-const showError = () => {
-    const emptyState = document.getElementById('emptyState');
-    emptyState.innerHTML = `
-        <i class="fas fa-exclamation-triangle"></i>
-        <h3>Gagal Memuat Data</h3>
-        <p>Coba refresh halaman atau coba lagi nanti</p>
-    `;
-    emptyState.style.display = 'flex';
-};
-
-// ======================
-// EVENT LISTENERS
-// ======================
-document.getElementById('searchInput').addEventListener('input', filterSchedules);
-document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-document.querySelector('.close-modal').addEventListener('click', () => {
-    document.getElementById('participantModal').style.display = 'none';
-});
-
-window.onclick = (e) => {
-    const modal = document.getElementById('participantModal');
-    if (e.target === modal) {
-        modal.style.display = 'none';
+    switch(type) {
+        case MODAL_TYPES.COURSE:
+            filteredData = allSchedules.filter(item => 
+                item.Mata_Pelajaran === value && 
+                new Date(item.Tanggal) >= new Date()
+            );
+            title = `Detail Mata Kuliah: ${value}`;
+            break;
+            
+        case MODAL_TYPES.INSTITUTION:
+            filteredData = allSchedules.filter(item => 
+                item.Institusi === value && 
+                new Date(item.Tanggal) >= new Date()
+            );
+            title = `Jadwal Institusi: ${value}`;
+            break;
+            
+        case MODAL_TYPES.DATE:
+            filteredData = allSchedules.filter(item => 
+                formatDate(item.Tanggal) === value && 
+                new Date(item.Tanggal) >= new Date()
+            );
+            title = `Jadwal Tanggal: ${value}`;
+            break;
+            
+        case MODAL_TYPES.PARTICIPANT:
+            filteredData = allSchedules.filter(item => 
+                item.Peserta.includes(value) && 
+                new Date(item.Tanggal) >= new Date()
+            );
+            title = `Jadwal Peserta: ${value}`;
+            break;
     }
+    
+    showModal(title, generateModalContent(filteredData));
 };
 
 // ======================
-// INITIALIZATION
+// EVENT HANDLERS
 // ======================
-initTheme();
-fetchData();
+const attachDynamicListeners = ()
