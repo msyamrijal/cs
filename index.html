@@ -9,43 +9,37 @@
 </head>
 <body>
     <header class="header">
-        <div class="header-content">
-            <div class="header-main">
-                <div class="brand">
-                    <i class="fas fa-calendar-alt"></i>
-                    <h1>Jadwal Kuliah</h1>
-                </div>
-                <button id="themeToggle" class="theme-toggle">
-                    <span class="theme-icon"></span>
-                </button>
+        <div class="header-top">
+            <div class="brand">
+                <i class="fas fa-calendar-alt"></i>
+                <h1>Jadwal Kuliah</h1>
             </div>
-            
-            <div class="header-actions">
-                <div class="search-container">
-                    <input type="text" 
-                           id="searchInput" 
-                           class="search-input" 
-                           placeholder="Cari mata kuliah, peserta, atau tanggal..."
-                           aria-label="Pencarian jadwal">
-                    <i class="fas fa-search"></i>
-                </div>
-                <nav class="filter-nav" id="filterNav" aria-label="Filter institusi"></nav>
+            <button id="themeToggle" class="theme-toggle">
+                <span class="theme-icon"></span>
+            </button>
+        </div>
+        
+        <div class="header-bottom">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Cari jadwal...">
+                <i class="fas fa-search"></i>
             </div>
+            <nav class="filter-nav" id="filterNav"></nav>
         </div>
     </header>
 
     <main class="main-content">
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p class="loading-text">Memuat Jadwal...</p>
+            <p>Memuat Jadwal...</p>
         </div>
 
         <div class="schedule-grid" id="scheduleGrid"></div>
 
         <div class="empty-state" id="emptyState">
-            <i class="fas fa-calendar-times empty-icon"></i>
-            <h2 class="empty-title">Tidak Ada Jadwal Ditemukan</h2>
-            <p class="empty-description">Coba gunakan kata kunci berbeda atau pilih filter lainnya</p>
+            <i class="fas fa-calendar-times"></i>
+            <h3>Jadwal tidak ditemukan</h3>
+            <p>Coba kata kunci atau filter berbeda</p>
         </div>
     </main>
 
@@ -53,7 +47,7 @@
     <div class="participant-modal" id="participantModal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
-            <h3 class="modal-title" id="modalTitle"></h3>
+            <h3 id="modalTitle"></h3>
             <div class="modal-schedules" id="modalSchedules"></div>
         </div>
     </div>
