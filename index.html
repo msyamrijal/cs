@@ -8,40 +8,47 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="header">
-        <h1>Jadwal Kuliah</h1>
-        <button id="themeToggle">
-            <i class="fas fa-moon"></i>
-        </button>
-    </div>
-
-    <div class="container">
-        <input type="text" class="search-input" id="searchInput" placeholder="Cari jadwal...">
-        <div class="grid" id="scheduleGrid"></div>
-    </div>
-
-    <!-- Modals -->
-    <div class="modal" id="participantModal">
-        <div class="modal-content">
-            <h2 id="modalParticipantTitle"></h2>
-            <div id="modalParticipantContent"></div>
-            <button class="close-btn" onclick="closeModal('participantModal')">Tutup</button>
+    <header class="header">
+        <div class="header-top">
+            <div class="brand">
+                <i class="fas fa-calendar-alt"></i>
+                <h1>Jadwal Kuliah</h1>
+            </div>
+            <button id="themeToggle" class="theme-toggle">
+                <span class="theme-icon"></span>
+            </button>
         </div>
-    </div>
-
-    <div class="modal" id="courseModal">
-        <div class="modal-content">
-            <h2 id="modalCourseTitle"></h2>
-            <div id="modalCourseContent"></div>
-            <button class="close-btn" onclick="closeModal('courseModal')">Tutup</button>
+        
+        <div class="header-bottom">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Cari jadwal...">
+                <i class="fas fa-search"></i>
+            </div>
+            <nav class="filter-nav" id="filterNav"></nav>
         </div>
-    </div>
+    </header>
 
-    <div class="modal" id="dateModal">
+    <main class="main-content">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Memuat Jadwal...</p>
+        </div>
+
+        <div class="schedule-grid" id="scheduleGrid"></div>
+
+        <div class="empty-state" id="emptyState">
+            <i class="fas fa-calendar-times"></i>
+            <h3>Jadwal tidak ditemukan</h3>
+            <p>Coba kata kunci atau filter berbeda</p>
+        </div>
+    </main>
+
+    <!-- Participant Modal -->
+    <div class="participant-modal" id="participantModal">
         <div class="modal-content">
-            <h2 id="modalDateTitle"></h2>
-            <div id="modalDateContent"></div>
-            <button class="close-btn" onclick="closeModal('dateModal')">Tutup</button>
+            <span class="close-modal">&times;</span>
+            <h3 id="modalTitle"></h3>
+            <div class="modal-schedules" id="modalSchedules"></div>
         </div>
     </div>
 
