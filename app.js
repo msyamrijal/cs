@@ -1,5 +1,6 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycby9sPywic_2ifeYBzE3dQMHfrwkR4-fQv-bNx74HMduvcq5Rr4r9MY6GGEYNqI44WRI/exec';
 let allSchedules = [];
+const modeIcon = document.getElementById('modeIcon');
 
 // Theme Management
 const initTheme = () => {
@@ -11,29 +12,24 @@ const initTheme = () => {
 };
 
 const toggleTheme = () => {
-    const overlay = document.querySelector('.overlay');
+    const overlay = document.querySelector('.theme-overlay');
     const body = document.body;
     
     if(body.classList.contains('dark-mode')) {
         body.classList.remove('dark-mode');
         localStorage.setItem('theme', 'light');
         modeIcon.textContent = 'dark_mode';
-        setTimeout(() => overlay.style.transform = 'translate(50%, -50%) scale(0)', 50);
+        
+        setTimeout(() => {
+            overlay.style.transform = 'translate(-50%, -50%) scale(0)';
+        }, 50);
     } else {
-        overlay.style.transform = 'translate(50%, -50%) scale(100)';
+        overlay.style.transform = 'translate(-50%, -50%) scale(100)';
         body.classList.add('dark-mode');
         localStorage.setItem('theme', 'dark');
         modeIcon.textContent = 'light_mode';
     }
 };
-
-// DOM Elements
-const modeIcon = document.getElementById('modeIcon');
-const searchInput = document.getElementById('searchInput');
-const filterNav = document.getElementById('filterNav');
-const scheduleGrid = document.getElementById('scheduleGrid');
-const loading = document.getElementById('loading');
-const emptyState = document.getElementById('emptyState');
 
 // Data Handling
 const fetchData = async () => {
@@ -54,13 +50,15 @@ const fetchData = async () => {
     } catch (error) {
         showError();
     } finally {
-        loading.style.display = 'none';
+        document.getElementById('loading').style.display = 'none';
     }
 };
 
 // Filter System
 const initFilters = () => {
     const institutions = [...new Set(allSchedules.map(item => item.Institusi))];
+    const filterNav = document.getElementById('filterNav');
+    
     filterNav.innerHTML = `
         <button class="filter-btn active" data-filter="all">Semua</button>
         ${institutions.map(inst => `
@@ -80,7 +78,7 @@ const handleFilterClick = (e) => {
 };
 
 const filterSchedules = () => {
-    const searchTerm = searchInput.value.toLowerCase();
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
     
     const filtered = allSchedules.filter(item => {
@@ -102,7 +100,10 @@ const filterSchedules = () => {
 
 // Rendering
 const renderSchedules = (data) => {
-    scheduleGrid.innerHTML = '';
+    const grid = document.getElementById('scheduleGrid');
+    const emptyState = document.getElementById('emptyState');
+    
+    grid.innerHTML = '';
     
     if (data.length === 0) {
         emptyState.style.display = 'flex';
@@ -110,6 +111,7 @@ const renderSchedules = (data) => {
     }
     
     emptyState.style.display = 'none';
+
     data.forEach(item => {
         const card = document.createElement('article');
         card.className = 'schedule-card';
@@ -125,7 +127,7 @@ const renderSchedules = (data) => {
                 `).join('')}
             </div>
         `;
-        scheduleGrid.appendChild(card);
+        grid.appendChild(card);
     });
 };
 
@@ -138,47 +140,55 @@ const attachParticipantListeners = () => {
     });
 };
 
-const showParticipantSchedule = (name) => {
-    const modal = document.getElementById('participantModal');
-    const today = new Date();
-    const upcoming = allSchedules.filter(s => 
-        s.Peserta.includes(name) && new Date(s.Tanggal) >= today
+const showParticipantSchedule = (participantName) => {
+    const upcomingSchedules = allSchedules.filter(schedule => 
+        schedule.Peserta.includes(participantName) && 
+        new Date(schedule.Tanggal) >= new Date()
     );
+
+    const modal = document.getElementById('participantModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSchedules = document.getElementById('modalSchedules');
     
-    modal.style.display = 'block';
-    document.getElementById('modalTitle').textContent = `Jadwal ${name}`;
-    document.getElementById('modalSchedules').innerHTML = upcoming.length > 0 
-        ? upcoming.map(s => `
+    modalTitle.textContent = `Jadwal ${participantName}`;
+    modalSchedules.innerHTML = upcomingSchedules.length > 0 
+        ? upcomingSchedules.map(schedule => `
             <div class="modal-schedule-item">
                 <div class="modal-item-header">
-                    <h4>${s.Mata_Pelajaran}</h4>
-                    <span>${formatDate(s.Tanggal)}</span>
+                    <h4>${schedule.Mata_Pelajaran}</h4>
+                    <span>${formatDate(schedule.Tanggal)}</span>
                 </div>
-                <div class="institute">${s.Institusi}</div>
+                <div class="institute">${schedule.Institusi}</div>
             </div>
         `).join('')
-        : `<p class="no-schedule">Tidak ada jadwal berikutnya</p>`;
+        : `<p>Tidak ada jadwal berikutnya untuk ${participantName}</p>`;
+    
+    modal.style.display = 'block';
 };
 
 // Utilities
-const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-});
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+    });
+};
 
 const showError = () => {
+    const emptyState = document.getElementById('emptyState');
     emptyState.innerHTML = `
         <i class="material-icons">error_outline</i>
         <h3>Gagal Memuat Data</h3>
-        <p>Coba refresh halaman</p>
+        <p>Coba refresh halaman atau coba lagi nanti</p>
     `;
     emptyState.style.display = 'flex';
 };
 
 // Event Listeners
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-searchInput.addEventListener('input', filterSchedules);
+document.getElementById('searchInput').addEventListener('input', filterSchedules);
 document.querySelector('.close-modal').addEventListener('click', () => {
     document.getElementById('participantModal').style.display = 'none';
 });
