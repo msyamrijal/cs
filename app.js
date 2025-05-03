@@ -92,16 +92,21 @@ const filterSchedules = () => {
     const selectedInstitution = elements.institutionFilter.value;
     
     const filtered = allSchedules.filter(item => {
-        const matchesSearch = [
+        // Fast path for institution filter
+        if (selectedInstitution !== 'all' && item.Institusi !== selectedInstitution) {
+            return false;
+        }
+
+        // Skip search if no search term
+        if (!searchTerm) return true;
+
+        // Search in all relevant fields
+        return [
             item.Institusi,
             item.Mata_Pelajaran,
             item.Tanggal,
             item.Peserta.join(' ')
-        ].some(text => text.toLowerCase().includes(searchTerm));
-        
-        const matchesInstitution = selectedInstitution === 'all' || item.Institusi === selectedInstitution;
-        
-        return matchesSearch && matchesInstitution;
+        ].some(field => field.toLowerCase().includes(searchTerm));
     });
 
     renderSchedules(filtered);
@@ -203,7 +208,6 @@ const attachDynamicListeners = () => {
         }
         // Existing click handlers
         else if (e.target.classList.contains('course-title')) {
-        if (e.target.classList.contains('course-title')) {
             handleEntityClick(e.target, 'Mata_Pelajaran');
         }
         else if (e.target.classList.contains('date-display')) {
@@ -214,8 +218,8 @@ const attachDynamicListeners = () => {
         }
         else if (e.target.classList.contains('participant-tag')) {
             const participantName = e.target.textContent;
-            const filteredData = allSchedules.filter(item => 
-                item.Peserta.includes(participantName) && 
+            const filteredData = allSchedules.filter(item =>
+                item.Peserta.includes(participantName) &&
                 new Date(item.Tanggal) >= new Date()
             );
             showGenericModal(`Jadwal ${participantName}`, filteredData);
