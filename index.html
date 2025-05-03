@@ -11,21 +11,27 @@
     <!-- Header Section -->
     <header class="header">
         <div class="header-top">
+            <!-- Branding -->
             <div class="brand">
                 <i class="fas fa-calendar-alt"></i>
                 <h1>Jadwal Kuliah</h1>
             </div>
+
+            <!-- Search and Filter -->
+            <div class="search-filter">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Cari mata kuliah atau peserta...">
+                    <i class="fas fa-search"></i>
+                </div>
+                <select id="institutionFilter" class="institution-filter">
+                    <option value="all">Semua Institusi</option>
+                </select>
+            </div>
+
+            <!-- Theme Toggle -->
             <button id="themeToggle" class="theme-toggle">
                 <span class="theme-icon"></span>
             </button>
-        </div>
-        
-        <div class="header-bottom">
-            <div class="search-container">
-                <input type="text" id="searchInput" class="search-input" placeholder="Cari jadwal...">
-                <i class="fas fa-search"></i>
-            </div>
-            <nav class="filter-nav" id="filterNav"></nav>
         </div>
     </header>
 
@@ -48,7 +54,7 @@
         </div>
     </main>
 
-    <!-- Generic Modal -->
+    <!-- Modal Section -->
     <div class="modal" id="genericModal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>

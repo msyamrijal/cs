@@ -1,23 +1,19 @@
 // app.js
 const API_URL = 'https://script.google.com/macros/s/AKfycby9sPywic_2ifeYBzE3dQMHfrwkR4-fQv-bNx74HMduvcq5Rr4r9MY6GGEYNqI44WRI/exec';
-const MODAL_TYPES = {
-    COURSE: 'course',
-    INSTITUTION: 'institution',
-    DATE: 'date',
-    PARTICIPANT: 'participant'
-};
 
-let allSchedules = [];
+// Elemen DOM
 const elements = {
-    loading: document.getElementById('loading'),
-    scheduleGrid: document.getElementById('scheduleGrid'),
-    emptyState: document.getElementById('emptyState'),
     searchInput: document.getElementById('searchInput'),
-    filterNav: document.getElementById('filterNav'),
+    institutionFilter: document.getElementById('institutionFilter'),
+    scheduleGrid: document.getElementById('scheduleGrid'),
+    loading: document.getElementById('loading'),
+    emptyState: document.getElementById('emptyState'),
     modal: document.getElementById('genericModal'),
     modalTitle: document.getElementById('modalTitle'),
     modalBody: document.getElementById('modalBody')
 };
+
+let allSchedules = [];
 
 // ======================
 // THEME MANAGEMENT
@@ -46,6 +42,7 @@ const updateThemeIcon = (theme) => {
 // ======================
 const fetchData = async () => {
     try {
+        elements.loading.style.display = 'flex';
         const response = await fetch(API_URL);
         const data = await response.json();
         
@@ -72,27 +69,27 @@ const fetchData = async () => {
 // ======================
 const initFilters = () => {
     const institutions = [...new Set(allSchedules.map(item => item.Institusi))];
-    elements.filterNav.innerHTML = `
-        <button class="filter-btn active" data-filter="all">Semua</button>
-        ${institutions.map(inst => `
-            <button class="filter-btn" data-filter="${inst}">${inst}</button>
-        `).join('')}
-    `;
-
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', handleFilterClick);
+    const filterSelect = elements.institutionFilter;
+    
+    // Clear existing options
+    filterSelect.innerHTML = '<option value="all">Semua Institusi</option>';
+    
+    // Add new options
+    institutions.forEach(inst => {
+        const option = document.createElement('option');
+        option.value = inst;
+        option.textContent = inst;
+        filterSelect.appendChild(option);
     });
-};
 
-const handleFilterClick = (e) => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    filterSchedules();
+    // Event listeners
+    elements.searchInput.addEventListener('input', filterSchedules);
+    filterSelect.addEventListener('change', filterSchedules);
 };
 
 const filterSchedules = () => {
     const searchTerm = elements.searchInput.value.toLowerCase();
-    const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+    const selectedInstitution = elements.institutionFilter.value;
     
     const filtered = allSchedules.filter(item => {
         const matchesSearch = [
@@ -102,9 +99,9 @@ const filterSchedules = () => {
             item.Peserta.join(' ')
         ].some(text => text.toLowerCase().includes(searchTerm));
         
-        const matchesFilter = activeFilter === 'all' || item.Institusi === activeFilter;
+        const matchesInstitution = selectedInstitution === 'all' || item.Institusi === selectedInstitution;
         
-        return matchesSearch && matchesFilter;
+        return matchesSearch && matchesInstitution;
     });
 
     renderSchedules(filtered);
@@ -143,21 +140,21 @@ const renderSchedules = (data) => {
 };
 
 // ======================
-// MODAL HANDLING
+// MODAL SYSTEM
 // ======================
-const showModal = (title, content) => {
+const showGenericModal = (title, data) => {
     elements.modalTitle.textContent = title;
-    elements.modalBody.innerHTML = content;
+    elements.modalBody.innerHTML = generateModalContent(data);
     elements.modal.style.display = 'block';
 };
 
 const generateModalContent = (data) => {
-    if (data.length === 0) return `<p class="no-data">Tidak ada data yang tersedia</p>`;
+    if (data.length === 0) return '<p class="no-data">Tidak ada data yang tersedia</p>';
     
     return data.map(item => `
         <div class="modal-item">
-            <div class="modal-item-header">
-                <h4>${item.Mata_Pelajaran}</h4>
+            <div class="card-header">
+                <h4 class="course-title">${item.Mata_Pelajaran}</h4>
                 <div class="modal-meta">
                     <span class="institute">${item.Institusi}</span>
                     <span class="date-display">${formatDate(item.Tanggal)}</span>
@@ -172,77 +169,39 @@ const generateModalContent = (data) => {
     `).join('');
 };
 
-const handleEntityClick = (type, value) => {
-    let filteredData = [];
-    let title = '';
-    
-    switch(type) {
-        case MODAL_TYPES.COURSE:
-            filteredData = allSchedules.filter(item => 
-                item.Mata_Pelajaran === value && 
-                new Date(item.Tanggal) >= new Date()
-            );
-            title = `Detail Mata Kuliah: ${value}`;
-            break;
-            
-        case MODAL_TYPES.INSTITUTION:
-            filteredData = allSchedules.filter(item => 
-                item.Institusi === value && 
-                new Date(item.Tanggal) >= new Date()
-            );
-            title = `Jadwal Institusi: ${value}`;
-            break;
-            
-        case MODAL_TYPES.DATE:
-            filteredData = allSchedules.filter(item => 
-                formatDate(item.Tanggal) === value && 
-                new Date(item.Tanggal) >= new Date()
-            );
-            title = `Jadwal Tanggal: ${value}`;
-            break;
-            
-        case MODAL_TYPES.PARTICIPANT:
-            filteredData = allSchedules.filter(item => 
-                item.Peserta.includes(value) && 
-                new Date(item.Tanggal) >= new Date()
-            );
-            title = `Jadwal Peserta: ${value}`;
-            break;
-    }
-    
-    showModal(title, generateModalContent(filteredData));
-};
-
 // ======================
 // EVENT HANDLERS
 // ======================
+const handleEntityClick = (element, property) => {
+    const value = element.textContent;
+    const filteredData = allSchedules.filter(item => 
+        item[property] === value && 
+        new Date(item.Tanggal) >= new Date()
+    );
+    
+    showGenericModal(`Jadwal ${value}`, filteredData);
+};
+
 const attachDynamicListeners = () => {
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('course-title')) {
-            handleEntityClick(MODAL_TYPES.COURSE, e.target.textContent);
-        }
-        else if (e.target.classList.contains('institute')) {
-            handleEntityClick(MODAL_TYPES.INSTITUTION, e.target.textContent);
+            handleEntityClick(e.target, 'Mata_Pelajaran');
         }
         else if (e.target.classList.contains('date-display')) {
-            handleEntityClick(MODAL_TYPES.DATE, e.target.textContent);
+            handleEntityClick(e.target, 'Tanggal');
+        }
+        else if (e.target.classList.contains('institute')) {
+            handleEntityClick(e.target, 'Institusi');
         }
         else if (e.target.classList.contains('participant-tag')) {
-            handleEntityClick(MODAL_TYPES.PARTICIPANT, e.target.textContent);
+            const participantName = e.target.textContent;
+            const filteredData = allSchedules.filter(item => 
+                item.Peserta.includes(participantName) && 
+                new Date(item.Tanggal) >= new Date()
+            );
+            showGenericModal(`Jadwal ${participantName}`, filteredData);
         }
     });
-};
-
-document.querySelectorAll('.close-modal').forEach(btn => {
-    btn.addEventListener('click', () => {
-        elements.modal.style.display = 'none';
-    });
-});
-
-window.onclick = (e) => {
-    if (e.target === elements.modal) {
-        elements.modal.style.display = 'none';
-    }
 };
 
 // ======================
@@ -271,7 +230,12 @@ const showError = () => {
 // INITIALIZATION
 // ======================
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-elements.searchInput.addEventListener('input', filterSchedules);
+window.addEventListener('click', (e) => {
+    if (e.target === elements.modal) elements.modal.style.display = 'none';
+});
+document.querySelector('.close-modal').addEventListener('click', () => {
+    elements.modal.style.display = 'none';
+});
 
 // Start Application
 initTheme();
