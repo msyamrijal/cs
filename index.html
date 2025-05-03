@@ -1,68 +1,71 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jadwal Kuliah Interaktif</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Islamic Schedule</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Header Section -->
-    <header class="header">
-        <div class="header-top">
-            <!-- Branding -->
-            <div class="brand">
-                <i class="fas fa-calendar-alt"></i>
-                <h1>Jadwal Kuliah</h1>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>Islamic Schedule</h1>
+                <p>Your spiritual journey planner</p>
+            </div>
+            <div class="mosque-icon">
+                <svg viewBox="0 0 24 24" width="48" height="48">
+                    <path d="M12 2L2 7v2h2v10H2v2h20v-2h-2V9h2V7L12 2zm0 2.5L18 7v2h12v8H6V7l6-2.5zM6 19v-8h12v8H6z"/>
+                </svg>
+            </div>
+        </header>
+
+        <main>
+            <div class="quran-verse">
+                <h2>Quran Verse of the Day</h2>
+                <p class="verse">"And We have not sent you, [O Muhammad], except as a mercy to the worlds."</p>
+                <p class="reference">Quran 21:107</p>
             </div>
 
-            <!-- Search and Filter -->
-            <div class="search-filter">
-                <div class="search-container">
-                    <input type="text" id="searchInput" placeholder="Cari mata kuliah atau peserta...">
-                    <i class="fas fa-search"></i>
+            <div class="prayer-times">
+                <h2>Prayer Times</h2>
+                <div class="prayer-grid">
+                    <div class="prayer">
+                        <span class="prayer-name">Fajr</span>
+                        <span class="prayer-time">04:30</span>
+                    </div>
+                    <div class="prayer">
+                        <span class="prayer-name">Dhuhr</span>
+                        <span class="prayer-time">12:30</span>
+                    </div>
+                    <div class="prayer">
+                        <span class="prayer-name">Asr</span>
+                        <span class="prayer-time">15:45</span>
+                    </div>
+                    <div class="prayer">
+                        <span class="prayer-name">Maghrib</span>
+                        <span class="prayer-time">18:30</span>
+                    </div>
+                    <div class="prayer">
+                        <span class="prayer-name">Isha</span>
+                        <span class="prayer-time">20:00</span>
+                    </div>
                 </div>
-                <select id="institutionFilter" class="institution-filter">
-                    <option value="all">Semua Institusi</option>
-                </select>
             </div>
 
-            <!-- Theme Toggle -->
-            <button id="themeToggle" class="theme-toggle">
-                <span class="theme-icon"></span>
-            </button>
-        </div>
-    </header>
+            <div class="schedule-section">
+                <h2>Your Schedule</h2>
+                <div id="scheduleGrid" class="schedule-grid">
+                    <!-- Schedule items will be added here by JavaScript -->
+                </div>
+            </div>
+        </main>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Loading State -->
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Memuat Jadwal...</p>
-        </div>
-
-        <!-- Schedule Grid -->
-        <div class="schedule-grid" id="scheduleGrid"></div>
-
-        <!-- Empty State -->
-        <div class="empty-state" id="emptyState">
-            <i class="fas fa-calendar-times"></i>
-            <h3>Jadwal tidak ditemukan</h3>
-            <p>Coba kata kunci atau filter berbeda</p>
-        </div>
-    </main>
-
-    <!-- Modal Section -->
-    <div class="modal" id="genericModal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h3 id="modalTitle"></h3>
-            <div class="modal-body" id="modalBody"></div>
-        </div>
+        <footer>
+            <p>© 2024 Islamic Schedule. All rights reserved.</p>
+        </footer>
     </div>
-
     <script src="app.js"></script>
 </body>
 </html>
