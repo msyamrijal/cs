@@ -123,6 +123,10 @@ const renderSchedules = (data) => {
     data.forEach(item => {
         const card = document.createElement('article');
         card.className = 'schedule-card';
+        card.dataset.title = item.Mata_Pelajaran;
+        card.dataset.detail = item.Institusi;
+        card.dataset.date = item.Tanggal;
+        card.dataset.participants = item.Peserta.join(', ');
         card.innerHTML = `
             <div class="card-header">
                 <h3 class="clickable course-title">${item.Mata_Pelajaran}</h3>
@@ -184,6 +188,21 @@ const handleEntityClick = (element, property) => {
 
 const attachDynamicListeners = () => {
     document.addEventListener('click', (e) => {
+        // Handle cart item click
+        if (e.target.closest('.schedule-card')) {
+            const card = e.target.closest('.schedule-card');
+            showGenericModal(
+                card.dataset.title,
+                [{
+                    Mata_Pelajaran: card.dataset.title,
+                    Institusi: card.dataset.detail,
+                    Tanggal: card.dataset.date,
+                    Peserta: card.dataset.participants.split(', ')
+                }]
+            );
+        }
+        // Existing click handlers
+        else if (e.target.classList.contains('course-title')) {
         if (e.target.classList.contains('course-title')) {
             handleEntityClick(e.target, 'Mata_Pelajaran');
         }
